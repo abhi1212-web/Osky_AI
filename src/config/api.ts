@@ -13,8 +13,7 @@ export const API_CONFIG = {
 
 // Instructions for connecting your FastAPI backend:
 //
-// 1. Replace 'your-replit-app-name' and 'your-username' in BASE_URL with your actual values
-// 2. Make sure your FastAPI backend has the following endpoints:
+// 1. Make sure your FastAPI backend has the following endpoints:
 //    - GET /health - Health check endpoint
 //    - POST /chat - Send message and get AI response
 //    - GET /chats - Get all chat sessions
@@ -23,7 +22,7 @@ export const API_CONFIG = {
 //    - DELETE /chats/{chat_id} - Delete chat
 //    - PATCH /chats/{chat_id}/pin - Toggle pin status
 //
-// 3. Enable CORS in your FastAPI app to allow requests from this frontend
+// 2. Enable CORS in your FastAPI app to allow requests from this frontend
 //
 // Example FastAPI CORS setup:
 // from fastapi.middleware.cors import CORSMiddleware
