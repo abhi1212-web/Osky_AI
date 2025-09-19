@@ -1,14 +1,73 @@
-// src/services/api.ts
-import axios from "axios";
+// API service for connecting to OSKY AI backend
+import { API_CONFIG } from '@/config/api';
 
-const API_BASE_URL = "http://localhost:8080"; // or http://172.30.1.120:8080 if running on LAN
+export interface ApiMessage {
+  id: string;
+  content: string;
+  isOutgoing: boolean;
+  timestamp: string;
+  status: 'sending' | 'delivered' | 'sent' | 'error';
+}
 
-export const sendMessageToOSKY = async (message: string) => {
-  try {
-    const response = await axios.post(`${API_BASE_URL}/api/chat`, { message });
-    return response.data; // { reply: "OSKY received: ..." }
-  } catch (error) {
-    console.error("❌ Error connecting to OSKY backend:", error);
-    return { reply: "⚠️ Error connecting to OSKY backend." };
+export interface ChatSession {
+  id: string;
+  title: string;
+  lastMessage: string;
+  timestamp: string;
+  isPinned: boolean;
+  isActive: boolean;
+}
+
+class ApiService {
+  private baseUrl: string;
+
+  constructor(baseUrl: string = API_CONFIG.BASE_URL) {
+    this.baseUrl = baseUrl;
   }
-};
+
+  // Send message to OSKY AI and get response
+  async sendMessage(message: string): Promise<string> {
+    try {
+      const response = await fetch(`${this.baseUrl}/api/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: message,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.reply || 'No response received';
+    } catch (error) {
+      console.error('Error sending message:', error);
+      throw new Error('Failed to send message. Please check your connection.');
+    }
+  }
+
+  // Health check
+  async healthCheck(): Promise<boolean> {
+    try {
+      const response = await fetch(`${this.baseUrl}/api/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: 'health check',
+        }),
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('Health check failed:', error);
+      return false;
+    }
+  }
+}
+
+export const apiService = new ApiService();
