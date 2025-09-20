@@ -24,7 +24,7 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY is not configured');
     }
 
-    console.log('Generating image with prompt:', prompt);
+    console.log('Generating image with DALL-E for prompt:', prompt);
 
     const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',

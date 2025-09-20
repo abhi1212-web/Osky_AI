@@ -40,7 +40,7 @@ serve(async (req) => {
       }
     ];
 
-    console.log('Sending request to Groq API with messages:', messages);
+    console.log('Sending request to Groq API with', messages.length, 'messages');
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -49,7 +49,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.1-70b-versatile',
+        model: 'llama-3.3-70b-versatile',
         messages: messages,
         max_tokens: 1024,
         temperature: 0.7,
@@ -73,7 +73,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ 
       response: aiMessage,
-      model: 'llama-3.1-70b-versatile',
+      model: 'llama-3.3-70b-versatile',
       timestamp: new Date().toISOString()
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
