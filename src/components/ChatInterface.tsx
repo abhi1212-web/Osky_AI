@@ -78,9 +78,12 @@ export const ChatInterface = () => {
         messages.map(m => ({ role: m.role, content: m.content }))
       );
 
+      // Handle different response formats
+      const responseText = response.message || response.response || response.content || 'No response received';
+      
       setMessages(prev => prev.map(msg => 
         msg.id === loadingMessage.id 
-          ? { ...msg, content: response.response || 'No response received', isLoading: false }
+          ? { ...msg, content: responseText, isLoading: false }
           : msg
       ));
     } catch (error) {
@@ -135,38 +138,57 @@ export const ChatInterface = () => {
           try {
             const response = await APIService.processVoice(audioBlob);
             
+            if (response.error) {
+              throw new Error(response.error);
+            }
+            
             // Add user message with transcription
             const userMessage: Message = {
               id: Date.now().toString(),
-              content: response.transcription,
+              content: response.transcription || response.text || "Voice transcription failed",
               role: 'user',
               timestamp: new Date(),
               type: 'text'
             };
 
-            // Add AI response
-            const aiMessage: Message = {
-              id: (Date.now() + 1).toString(),
-              content: response.response,
-              role: 'assistant',
-              timestamp: new Date(),
-              type: 'text',
-              metadata: { audio: response.audio }
-            };
+            setMessages(prev => [...prev, userMessage]);
 
-            setMessages(prev => [...prev, userMessage, aiMessage]);
+            // Only add AI response if we have one
+            if (response.response || response.reply) {
+              const aiMessage: Message = {
+                id: (Date.now() + 1).toString(),
+                content: response.response || response.reply,
+                role: 'assistant',
+                timestamp: new Date(),
+                type: 'text',
+                metadata: { audio: response.audio }
+              };
 
-            // Play AI response audio
-            if (response.audio) {
-              const audio = new Audio(response.audio);
-              audio.play().catch(console.error);
+              setMessages(prev => [...prev, aiMessage]);
+
+              // Play AI response audio if available
+              if (response.audio) {
+                const audio = new Audio(response.audio);
+                audio.play().catch(console.error);
+              }
             }
 
           } catch (error) {
             console.error('Voice processing error:', error);
+            
+            // Show more specific error messages
+            let errorMessage = "Failed to process voice input.";
+            if (error instanceof Error) {
+              if (error.message.includes('429') || error.message.includes('quota')) {
+                errorMessage = "Voice service temporarily unavailable. The API quota has been exceeded.";
+              } else if (error.message.includes('network') || error.message.includes('fetch')) {
+                errorMessage = "Network error. Please check your connection and try again.";
+              }
+            }
+            
             toast({
               title: "Voice Error",
-              description: "Failed to process voice input.",
+              description: errorMessage,
               variant: "destructive",
             });
           } finally {
@@ -248,9 +270,19 @@ export const ChatInterface = () => {
 
     } catch (error) {
       console.error('File upload error:', error);
+      
+      let errorMessage = "Failed to upload file.";
+      if (error instanceof Error) {
+        if (error.message.includes('size')) {
+          errorMessage = "File is too large. Please try a smaller file.";
+        } else if (error.message.includes('type') || error.message.includes('format')) {
+          errorMessage = "File type not supported. Please try a different file format.";
+        }
+      }
+      
       toast({
         title: "Upload Error",
-        description: "Failed to upload file.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -313,6 +345,16 @@ export const ChatInterface = () => {
 
     } catch (error) {
       console.error('Image generation error:', error);
+      
+      let errorMessage = "Failed to generate image.";
+      if (error instanceof Error) {
+        if (error.message.includes('429') || error.message.includes('quota')) {
+          errorMessage = "Image generation temporarily unavailable. API quota exceeded.";
+        } else if (error.message.includes('content') || error.message.includes('policy')) {
+          errorMessage = "Image prompt violates content policy. Please try a different prompt.";
+        }
+      }
+      
       setMessages(prev => prev.map(msg => 
         msg.id === loadingMessage.id 
           ? { ...msg, content: 'Failed to generate image. Please try again.', isLoading: false }
@@ -321,7 +363,7 @@ export const ChatInterface = () => {
       
       toast({
         title: "Generation Error",
-        description: "Failed to generate image.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -385,6 +427,14 @@ export const ChatInterface = () => {
 
     } catch (error) {
       console.error('Code generation error:', error);
+      
+      let errorMessage = "Failed to generate code.";
+      if (error instanceof Error) {
+        if (error.message.includes('429') || error.message.includes('quota')) {
+          errorMessage = "Code generation temporarily unavailable. API quota exceeded.";
+        }
+      }
+      
       setMessages(prev => prev.map(msg => 
         msg.id === loadingMessage.id 
           ? { ...msg, content: 'Failed to generate code. Please try again.', isLoading: false }
@@ -393,7 +443,7 @@ export const ChatInterface = () => {
       
       toast({
         title: "Generation Error",
-        description: "Failed to generate code.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

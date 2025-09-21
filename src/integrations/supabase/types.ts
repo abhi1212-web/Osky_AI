@@ -14,7 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
     }
     Views: {
       [_ in never]: never
