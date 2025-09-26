@@ -656,4 +656,3 @@ export const ChatInterface = () => {
       </div>
     </div>
   );
-};
